@@ -15,7 +15,7 @@ package main
 
 // TODO:
 // 1. Create SQLITE DB "blfw" if not exists, connect to SQLite database (initialise) [v]
-// 2. Create CRUD ops for querying to DB and export functions
+// 2. Create CRUD ops for querying to DB and export functions [WIP]
 
 import (
 	"fmt"
@@ -95,7 +95,13 @@ func delete(path_id string) {
 	}
 }
 
-func update() {
+func update(path_id string, path_uri string) {
+	// Only designed to update the Path URI
+	uuidPathId, err := uuid.Parse(path_id)
+	if err == nil {
+		result := db.Save(&Paths{ID: uuidPathId, Path_Uri: path_uri})
+		fmt.Println(result.RowsAffected)
+	}
 
 }
 
@@ -109,4 +115,8 @@ func retrieveAllPaths() {
 
 func main() {
 	// use main for testing only
+	initialiseDB()
+	//insert("Send To RZ-X from PJ-M", "SEND", "//XLFGX3/Advance/")
+	update("6708624b-2b3e-40ba-8f71-3d36418b1afb", "//XLFGX3/Advance/SendToPortX")
+	retrieveAllPaths()
 }
