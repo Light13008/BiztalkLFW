@@ -1,16 +1,16 @@
 package main
 
-// Paths Driver for BLFW
-// Path: A path is a
+// Paths DB Driver for BLFW
+// Path: A path is a network or local URI used for Send Ports / Receive Locations that uses FILE Adapter
 // Description: Driver for interacting SQLite DB for saving, viewing and modifying paths.
 // Usage : import functions of pathServ from external go modules
 // SCHEMA :
 // BLFW.DB -> TABLES:
 //				-> PATHS
 // 					-> COLUMNS:
-// 						-> PATH_ID: UNIQUE: UINT
+// 						-> PATH_ID: UNIQUE: UUID (PRIMARY KEY)
 // 						-> PORT_NAME: STRING
-// 						-> PORT_TYPE: VARCHAR(10)
+// 						-> PORT_TYPE: STRING
 // 						-> PATH_URI: STRING
 
 // TODO:
@@ -29,7 +29,7 @@ import (
 // defining types
 type Paths struct {
 	gorm.Model
-	Path_Id   uuid.UUID
+	ID        uuid.UUID `gorm:"primaryKey"`
 	Port_Name string
 	Port_Type string
 	Path_Uri  string
@@ -42,21 +42,21 @@ var db *gorm.DB
 func initialiseDB() {
 	var connCheck bool = true
 	// Step 1: Check if DB Exists, if not create DB file
-	_, fileCreationerror := os.Stat("blfw.db")
-	if fileCreationerror != nil {
+	_, fileCreationError := os.Stat("blfw.db")
+	if fileCreationError != nil {
 		fmt.Println("BLFW DB is not Present in the current directory, proceeding to create the DB")
 		os.Create("./blfw.db")
 	} else {
-		if fileCreationerror == nil {
+		if fileCreationError == nil {
 			fmt.Println("BLFW DB Found")
 		} else {
 			connCheck = false
 			fmt.Println("An Error Occured, creating the Database, exception is below:")
-			fmt.Println(fileCreationerror)
+			fmt.Println(fileCreationError)
 		}
 	}
 	if connCheck {
-		// Step 3: Connect to BLFW DB
+		// Step 2: Connect to BLFW DB
 		var err error
 		db, err = gorm.Open(sqlite.Open("blfw.db"), &gorm.Config{})
 		if err != nil {
@@ -65,32 +65,41 @@ func initialiseDB() {
 		} else {
 			fmt.Println("Database Connection Successful...")
 		}
-		// Step 4: Migrate Schema
+		// Step 3: Migrate Schema
 		db.AutoMigrate(&Paths{})
 	} else {
 		fmt.Println("Could not connect to database...Exiting")
 	}
 }
 
-func insertToPaths(port_name string, port_type string, path_uri string) {
+func insert(port_name string, port_type string, path_uri string) {
+	// Generate Random UUID and insert row to sqlite db
 	u, uuidErr := uuid.NewRandom()
 	if uuidErr == nil {
-		db.Create(&Paths{Path_Id: u, Port_Name: port_name, Port_Type: port_type, Path_Uri: path_uri})
+		db.Create(&Paths{ID: u, Port_Name: port_name, Port_Type: port_type, Path_Uri: path_uri})
 	} else {
 		fmt.Println("An error occured generating UUID")
 		fmt.Println(uuidErr)
 	}
 }
 
-func deletePath() {
+func delete(path_id string) {
+	// Convert path_id string to uuid
+	uuidPathId, err := uuid.Parse(path_id)
+	if err == nil {
+		db.Delete(&Paths{}, uuidPathId)
+		fmt.Println("Path has been successfully deleted")
+	} else {
+		fmt.Println("Error Occured Deleting the Path")
+		fmt.Println(err)
+	}
+}
+
+func update() {
 
 }
 
-func updatePath() {
-
-}
-
-func pathLists() {
+func retrieveAllPaths() {
 	var paths []Paths
 	db.Find(&paths)
 	for _, path := range paths {
@@ -100,7 +109,4 @@ func pathLists() {
 
 func main() {
 	// use main for testing only
-	// initialiseDB()
-	// insertToPaths("Send To WMS-MPI From ROSS-BPO", "SEND", "https://www.sample.edu/?aunt=pail&men=bit#slave")
-	// pathLists()
 }
