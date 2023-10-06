@@ -115,8 +115,4 @@ func retrieveAllPaths() {
 
 func main() {
 	// use main for testing only
-	initialiseDB()
-	//insert("Send To RZ-X from PJ-M", "SEND", "//XLFGX3/Advance/")
-	update("6708624b-2b3e-40ba-8f71-3d36418b1afb", "//XLFGX3/Advance/SendToPortX")
-	retrieveAllPaths()
 }
